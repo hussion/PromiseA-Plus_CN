@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Promise/A+规范翻译 by Hussion</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/Hussion/PromiseA-Plus_CN">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/Hussion/PromiseA-Plus_CN/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/Hussion/PromiseA-Plus_CN/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Promise/A+规范翻译</h1>
+          <p></p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/Hussion">Hussion</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h3>
+<a name="1-%E6%9C%AF%E8%AF%AD" class="anchor" href="#1-%E6%9C%AF%E8%AF%AD"><span class="octicon octicon-link"></span></a>1. 术语</h3>
+
+<ul>
+<li>promise是拥有<code>then</code>方法，其行为符合此规范的对象或者函数。<br>
+</li>
+<li>thenable是定义<code>then</code>方法的对象或者函数。<br>
+</li>
+<li>value是任何合法的javascript值(包括undefined, 一个thenable, 一个promise)<br>
+</li>
+<li>exception是一个值，通过<code>throw</code>语句抛出。<br>
+</li>
+<li>reason是一个值，表明promise被reject的原因。</li>
+</ul><h3>
+<a name="2-%E8%A6%81%E6%B1%82" class="anchor" href="#2-%E8%A6%81%E6%B1%82"><span class="octicon octicon-link"></span></a>2. 要求</h3>
+
+<p><strong>2.1 promise状态</strong></p>
+
+<p>一个promise必须是下面三种状态之一：<code>pending</code>, <code>fulfilled</code>, <code>rejected</code></p>
+
+<ul>
+<li>当一个promise是<code>pending</code>状态：</li>
+</ul><blockquote>
+<p>可以转变到fulfilled状态或者rejected状态</p>
+</blockquote>
+
+<ul>
+<li>当一个promise是<code>fulfilled</code>状态：</li>
+</ul><blockquote>
+<p>1. 不可以转变到其他任何状态
+2. 必须有一个不能改变的value</p>
+</blockquote>
+
+<ul>
+<li>当一个promise是<code>rejected</code>状态：</li>
+</ul><blockquote>
+<p>1. 不可以转变到其他任何状态
+2. 必须有一个不可改变的reason</p>
+</blockquote>
+
+<p>在这里，"不能改变"意味着不可改变身份(即 ===)，但并不意味着深不变性。</p>
+
+
+
+<p><strong>2.2 then方法</strong></p>
+
+<p>一个promise必须提供一个then方法来访问当前或者最终的value或者reason.</p>
+
+<p>一个promise的<code>then</code>方法，接受两个参数：</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">promise</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">onFulfilled</span><span class="p">,</span> <span class="nx">onRejected</span><span class="p">)</span>
+</pre></div>
+
+<ul>
+<li>
+<code>onFulfilled</code>和<code>onRejected</code>都是可选参数：</li>
+</ul><blockquote>
+<p>如果onFulfilled或者onRejected不是函数，将会被忽略</p>
+</blockquote>
+
+<ul>
+<li>如果<code>onFulfilled</code>是一个函数：</li>
+</ul><blockquote>
+<p>1. 当promise是fulfilled状态的时候被调用，promise的值将作为其第一个参数。
+2. 只能执行一次</p>
+</blockquote>
+
+<ul>
+<li>如果<code>onRejected</code>是一个函数：</li>
+</ul><blockquote>
+<p>当promise是rejected状态的时候被调用，promise的值将作为其第一个参数
+该函数只能执行一次</p>
+</blockquote>
+
+<ul>
+<li><p><code>onFulfilled</code>或者<code>onRejected</code>只有当执行上下文栈里只包含平台代码<a href="#note">3.1</a>的时候才会被调用执行。</p></li>
+<li><p><code>onFulfilled</code>或者<code>onRejected</code>只有是函数的时候才会被调用(即没有<code>this</code>值).<a href="#note">3.2</a></p></li>
+<li><p><code>then</code>在同一个promise里可以被调用多次。</p></li>
+</ul><blockquote>
+<p>当promise是fulfilled或者rejected状态的时候，onFulfilled和onRejected回调函数的调用顺序将会按照在then里定义的顺序进行调用。</p>
+</blockquote>
+
+<ul>
+<li>
+<code>then</code>必须返回一个promise<a href="#note">3.3</a>
+</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="nx">promise2</span> <span class="o">=</span> <span class="nx">promise1</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">onFulfilled</span><span class="p">,</span> <span class="nx">onRejcted</span><span class="p">);</span>
+</pre></div>
+
+<ul>
+<li>如果<code>onFulfilled</code>或者<code>onRejected</code>返回一个值<code>x</code>，那么将会执行Promise处理程序<code>[[Resolve]](promise2, x)</code>。</li>
+<li>如果<code>onFulfilled</code>或者<code>onRejected</code>抛出一个异常<code>e</code>，那么<code>promise2</code>将会因为异常<code>e</code>被rejected。</li>
+<li>如果<code>onFulfilled</code>不是一个function，而且<code>promise1</code>是fulfilled，那么<code>promise2</code>也必须以相同的值被fulfilled。</li>
+<li>如果<code>onRejected</code>不是一个function，而且<code>promise1</code>是rejected，那么<code>promise2</code>也必须以相同的原因被rejected</li>
+</ul><p><strong>2.3 Promise处理程序</strong></p>
+
+<p>Promise处理程序是一个输入promise和值的抽象操作，我们把它表示成：<code>[[Resolve]](promise, x)</code>。如果<code>x</code>是thenable，并假设<code>x</code>的行为至少在某种情况下是一个promise，那么它将会试图根据<code>x</code>的状态做出promise。否则<code>x</code>的值满足promise。</p>
+
+<p>对于thenables的处理，允许promise实现互操作，只要它们公开一个与Promise/A+兼容的方法。它也允许Promise/A+的实现，可以不符合标准，但是合理的实现。</p>
+
+<p>要运行<code>[[Resolve]](promise, x)</code>，请执行下列步骤：</p>
+
+<ol>
+<li>如果<code>promise</code>和<code>x</code>指向同一个对象，那么将会抛出异常<code>TypeError</code>，从而拒绝promise</li>
+<li>
+<p>如果<code>x</code>是promise，根据其状态<a href="#note">3.4</a>:</p>
+
+<ul>
+<li>如果<code>x</code>是pending状态，<code>x</code>必须保持该状态，直到<code>x</code>是fulfilled或者rejected。</li>
+<li>如果<code>x</code>是fulfilled状态，将会以相同的值去fulfill promise。</li>
+<li>如果<code>x</code>是rejected状态，将会以相同的原因去rejected promise。</li>
+</ul>
+</li>
+<li>
+<p>另外，如果<code>x</code>是对象或者函数：</p>
+
+<ul>
+<li>让<code>then</code>赋给<code>x.then</code>。<a href="#note">3.5</a>
+</li>
+<li>如果检索<code>x.then</code>属性的时候抛出了异常<code>e</code>，那么将会因为异常<code>e</code>reject promise。</li>
+<li>如果<code>then</code>是一个function，把<code>x</code>当做<code>this</code>去调用它，第一个参数为<code>resolvePromise</code>，第二个参数<code>rejectPromise</code>，这时：
+
+<ul>
+<li>如果当<code>resolvePromise</code>作为一个值<code>y</code>被调用的时候，将会执行<code>[[Resolve]](promise, y)</code>
+</li>
+<li>如果当<code>rejectPromise</code>作为一个原因<code>r</code>被调用的时候，将会因为<code>r</code>reject promise。</li>
+<li>如果<code>resolvePromise</code>和<code>resolvePromise</code>都被调用，或者一个参数被调用多次，那么只有第一次调用生效，其他次调用将会被忽略。</li>
+</ul>
+</li>
+<li>如果调用<code>then</code>抛出了一个异常<code>e</code>：
+
+<ul>
+<li>如果<code>resolvePromise</code>或者<code>resolvePromise</code>被调用过了，该异常将会被忽略。</li>
+<li>否则将会因为<code>e</code>reject promise</li>
+</ul>
+</li>
+<li>如果<code>then</code>不是一个function，将会通过<code>x</code>去fulfill promise</li>
+<li>如果<code>x</code>既不是对象也不是函数，也会通过<code>x</code>去fulfill promise</li>
+</ul>
+</li>
+</ol><p>如果promise通过一个圆形的thenable链被resolve，那么<code>[[Resolve]](promise, x)</code>的递归性质将最终导致<code>[[Resolve]](promise, x)</code>被再次调用，根据上述算法将导致无限递归。我们推荐去实现,但不是必需的,检测这样的递归和通过一个异常<code>TypeError</code>来reject promise。</p>
+
+<h3>
+<a name="3-notes" class="anchor" href="#3-notes"><span class="octicon octicon-link"></span></a>3. Notes<a name="note"></a>
+</h3>
+
+<p><strong>3.1</strong> 这里的“平台代码”是指引擎，环境，和promise执行代码。在实践中，需要确保onFulfilled和onRejected在一个新的堆栈中，并在事件循环<code>then</code>后异步执行。这可以实现任何一个“宏任务”机制，例如：setTimeout或setImmediate，或“微任务”的机制，如MutationObserver或process.nextTick。由于promise的实现被认为是平台的代码，它本身可能包含在该处理程序的调用的任务调度队列或“蹦床”。</p>
+
+<p><strong>3.2</strong> 也就是说，在严格模式下，<code>this</code>将是不确定的 ;在非严格模式下，<code>this</code>将是全局对象。</p>
+
+<p><strong>3.3</strong> 实现可能允许<code>promise2 === promise1</code>，提供了符合所有要求的实现。每个实现应说明是否<code>promise2 === promise1</code>会在某种条件下可以产生。</p>
+
+<p><strong>3.4</strong> 一般来说，如果它来自当前的实现，<code>x</code>将是一个真正的promise。并允许根据符合promise的状态，使用特定的实现手段。</p>
+
+<p><strong>3.5</strong> 程序第一次执行的时候会保存<code>x.then</code>的引用，然后并会测试该引用，并调用该引用，避免了多次访问<code>x.then</code>属性。并能确保一致性。</p>
+
+<p><strong>3.6</strong> 实现不应设置没有任何深度限制的thenable链，否则将会导致无限递归。只有正常的周期才会导致一个<code>TypeError</code>异常，如果遇到一个无限递归thenables链，递归永远是正确的行为.</p>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
